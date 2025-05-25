@@ -4,18 +4,6 @@ Dynamic Calendar is a modern, customizable React component designed to simplify 
 
 👉 [Try the Live Demo](https://my-dynamic-calendar.netlify.app/) | [View Source](https://github.com/Surya0144/dynamic-calendar)
 
-## Overview
-
-https://github.com/Surya1044/dynamic-calendar/assets/demo/calendar-overview.mp4
-
-_Quick demo showing basic calendar navigation and event management_
-
-### Key Features in Action
-
-| Feature                                                                    | Preview                                           |
-| -------------------------------------------------------------------------- | ------------------------------------------------- |
-| **Multiple Views** <br/> Switch between Month, Week, Day, and Agenda views | ![Calendar Views](assets/demo/calendar-views.gif) |
-| **Create Event** <br/> Create and edit events with rich options            | ![Event Management](assets/demo/Event.jpg)        |
 
 ## Features
 
