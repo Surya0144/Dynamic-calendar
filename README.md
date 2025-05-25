@@ -12,11 +12,10 @@ _Quick demo showing basic calendar navigation and event management_
 
 ### Key Features in Action
 
-| Feature                                                                     | Preview                                                  |
-| --------------------------------------------------------------------------- | -------------------------------------------------------- |
-| **Multiple Views** <br/> Switch between Month, Week, Day, and Agenda views  | ![Calendar Views](./public/demos/calendar-views.gif)     |
-| **Create Event** <br/> Create and edit events with rich options | ![Event Management](./public/demos/Event.jpg)    |
-
+| Feature                                                                    | Preview                                           |
+| -------------------------------------------------------------------------- | ------------------------------------------------- |
+| **Multiple Views** <br/> Switch between Month, Week, Day, and Agenda views | ![Calendar Views](assets/demo/calendar-views.gif) |
+| **Create Event** <br/> Create and edit events with rich options            | ![Event Management](assets/demo/Event.jpg)        |
 
 ## Features
 
