@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { RiCalendarLine, RiDeleteBinLine } from "@remixicon/react"
+import { RiCalendarLine, RiDeleteBinLine, RiRepeatLine } from "@remixicon/react"
 import { format, isBefore } from "date-fns"
 
 import { cn } from "@/lib/utils"
@@ -32,7 +32,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import type { CalendarEvent, EventColor } from "@/components/event-calendar"
+import type {
+  CalendarEvent,
+  EventColor,
+  RecurrencePattern,
+  RecurrenceType,
+} from "@/components/event-calendar"
 import {
   DefaultEndHour,
   DefaultStartHour,
@@ -68,6 +73,14 @@ export function EventDialog({
   const [startDateOpen, setStartDateOpen] = useState(false)
   const [endDateOpen, setEndDateOpen] = useState(false)
 
+  // New state for recurrence
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>("none")
+  const [recurrenceInterval, setRecurrenceInterval] = useState(1)
+  const [selectedWeekDays, setSelectedWeekDays] = useState<number[]>([])
+  const [monthDay, setMonthDay] = useState(1)
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | undefined>()
+  const [recurrenceEndDateOpen, setRecurrenceEndDateOpen] = useState(false)
+
   // Debug log to check what event is being passed
   useEffect(() => {
     console.log("EventDialog received event:", event)
@@ -77,10 +90,8 @@ export function EventDialog({
     if (event) {
       setTitle(event.title || "")
       setDescription(event.description || "")
-
       const start = new Date(event.start)
       const end = new Date(event.end)
-
       setStartDate(start)
       setEndDate(end)
       setStartTime(formatTimeForInput(start))
@@ -88,7 +99,18 @@ export function EventDialog({
       setAllDay(event.allDay || false)
       setLocation(event.location || "")
       setColor((event.color as EventColor) || "sky")
-      setError(null) // Reset error when opening dialog
+      setError(null)
+
+      // Set recurrence values
+      if (event.recurrence) {
+        setRecurrenceType(event.recurrence.type)
+        setRecurrenceInterval(event.recurrence.interval || 1)
+        setSelectedWeekDays(event.recurrence.weekDays || [])
+        setMonthDay(event.recurrence.monthDay || 1)
+        setRecurrenceEndDate(event.recurrence.endDate)
+      } else {
+        resetRecurrence()
+      }
     } else {
       resetForm()
     }
@@ -105,6 +127,15 @@ export function EventDialog({
     setLocation("")
     setColor("sky")
     setError(null)
+    resetRecurrence()
+  }
+
+  const resetRecurrence = () => {
+    setRecurrenceType("none")
+    setRecurrenceInterval(1)
+    setSelectedWeekDays([])
+    setMonthDay(1)
+    setRecurrenceEndDate(undefined)
   }
 
   const formatTimeForInput = (date: Date) => {
@@ -168,6 +199,19 @@ export function EventDialog({
     // Use generic title if empty
     const eventTitle = title.trim() ? title : "(no title)"
 
+    // Create recurrence pattern if type is not 'none'
+    const recurrence: RecurrencePattern | undefined =
+      recurrenceType !== "none"
+        ? {
+            type: recurrenceType,
+            interval: recurrenceInterval,
+            weekDays:
+              recurrenceType === "weekly" ? selectedWeekDays : undefined,
+            monthDay: recurrenceType === "monthly" ? monthDay : undefined,
+            endDate: recurrenceEndDate,
+          }
+        : undefined
+
     onSave({
       id: event?.id || "",
       title: eventTitle,
@@ -177,6 +221,7 @@ export function EventDialog({
       allDay,
       location,
       color,
+      recurrence,
     })
   }
 
@@ -442,6 +487,132 @@ export function EventDialog({
               ))}
             </RadioGroup>
           </fieldset>
+
+          {/* Recurrence Section */}
+          <div className="grid gap-2">
+            <Label>Recurrence</Label>
+            <Select
+              value={recurrenceType}
+              onValueChange={(value: RecurrenceType) =>
+                setRecurrenceType(value)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select recurrence pattern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No recurrence</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {recurrenceType !== "none" && (
+              <div className="mt-4 grid gap-4">
+                {recurrenceType === "custom" && (
+                  <div className="grid gap-2">
+                    <Label>Repeat every</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        value={recurrenceInterval}
+                        onChange={(e) =>
+                          setRecurrenceInterval(Number(e.target.value))
+                        }
+                        className="w-20"
+                      />
+                      <span>weeks</span>
+                    </div>
+                  </div>
+                )}
+
+                {recurrenceType === "weekly" && (
+                  <div className="grid gap-2">
+                    <Label>Repeat on</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                        (day, index) => (
+                          <Button
+                            key={day}
+                            type="button"
+                            variant={
+                              selectedWeekDays.includes(index)
+                                ? "default"
+                                : "outline"
+                            }
+                            className="w-12"
+                            onClick={() => {
+                              setSelectedWeekDays((prev) =>
+                                prev.includes(index)
+                                  ? prev.filter((d) => d !== index)
+                                  : [...prev, index]
+                              )
+                            }}
+                          >
+                            {day}
+                          </Button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {recurrenceType === "monthly" && (
+                  <div className="grid gap-2">
+                    <Label>Day of month</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={31}
+                      value={monthDay}
+                      onChange={(e) => setMonthDay(Number(e.target.value))}
+                      className="w-20"
+                    />
+                  </div>
+                )}
+
+                <div className="grid gap-2">
+                  <Label>End recurrence</Label>
+                  <Popover
+                    open={recurrenceEndDateOpen}
+                    onOpenChange={setRecurrenceEndDateOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "justify-start text-left font-normal",
+                          !recurrenceEndDate && "text-muted-foreground"
+                        )}
+                      >
+                        <RiCalendarLine className="mr-2 size-4" />
+                        {recurrenceEndDate ? (
+                          format(recurrenceEndDate, "PPP")
+                        ) : (
+                          <span>No end date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={recurrenceEndDate}
+                        onSelect={(date) => {
+                          setRecurrenceEndDate(date || undefined)
+                          setRecurrenceEndDateOpen(false)
+                        }}
+                        disabled={(date) => date < startDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         <DialogFooter className="flex-row sm:justify-between">
           {event?.id && (

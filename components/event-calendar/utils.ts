@@ -1,6 +1,26 @@
-import { isSameDay } from "date-fns"
+import {
+  addDays,
+  addMonths,
+  addWeeks,
+  differenceInDays,
+  eachDayOfInterval,
+  eachWeekOfInterval,
+  endOfMonth,
+  endOfWeek,
+  getDate,
+  isBefore,
+  isSameDay,
+  isWithinInterval,
+  setDate,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns"
 
-import type { CalendarEvent, EventColor } from "@/components/event-calendar"
+import type {
+  CalendarEvent,
+  EventColor,
+  RecurrencePattern,
+} from "@/components/event-calendar"
 
 /**
  * Get CSS classes for event colors
@@ -105,31 +125,110 @@ export function getSpanningEventsForDay(
 }
 
 /**
- * Get all events visible on a specific day (starting, ending, or spanning)
+ * Generate recurring event instances for a given date range
+ */
+export function generateRecurringEvents(
+  event: CalendarEvent,
+  rangeStart: Date,
+  rangeEnd: Date
+): CalendarEvent[] {
+  if (!event.recurrence) return [event]
+
+  const { type, interval = 1, weekDays, monthDay, endDate } = event.recurrence
+  const eventStart = new Date(event.start)
+  const eventEnd = new Date(event.end)
+  const eventDuration = differenceInDays(eventEnd, eventStart)
+  const instances: CalendarEvent[] = []
+
+  // Don't generate instances if the range is after the recurrence end date
+  if (endDate && isBefore(endDate, rangeStart)) {
+    return []
+  }
+
+  const generateInstance = (start: Date): CalendarEvent => {
+    const end = addDays(start, eventDuration)
+    return {
+      ...event,
+      id: `${event.id}-${start.getTime()}`,
+      start,
+      end,
+      isRecurringInstance: true,
+    }
+  }
+
+  switch (type) {
+    case "daily":
+      eachDayOfInterval({ start: rangeStart, end: rangeEnd }).forEach(
+        (date) => {
+          if (endDate && isBefore(endDate, date)) return
+          instances.push(generateInstance(date))
+        }
+      )
+      break
+
+    case "weekly":
+      if (!weekDays?.length) return [event]
+      eachWeekOfInterval({ start: rangeStart, end: rangeEnd }).forEach(
+        (weekStart) => {
+          if (endDate && isBefore(endDate, weekStart)) return
+          weekDays.forEach((day) => {
+            const date = addDays(startOfWeek(weekStart), day)
+            if (isWithinInterval(date, { start: rangeStart, end: rangeEnd })) {
+              instances.push(generateInstance(date))
+            }
+          })
+        }
+      )
+      break
+
+    case "monthly":
+      if (!monthDay) return [event]
+      let currentMonth = startOfMonth(rangeStart)
+      while (isBefore(currentMonth, rangeEnd)) {
+        if (endDate && isBefore(endDate, currentMonth)) break
+        const date = setDate(currentMonth, monthDay)
+        if (
+          isWithinInterval(date, { start: rangeStart, end: rangeEnd }) &&
+          getDate(endOfMonth(currentMonth)) >= monthDay
+        ) {
+          instances.push(generateInstance(date))
+        }
+        currentMonth = addMonths(currentMonth, 1)
+      }
+      break
+
+    case "custom":
+      let currentDate = new Date(eventStart)
+      while (isBefore(currentDate, rangeEnd)) {
+        if (endDate && isBefore(endDate, currentDate)) break
+        if (
+          isWithinInterval(currentDate, { start: rangeStart, end: rangeEnd })
+        ) {
+          instances.push(generateInstance(currentDate))
+        }
+        currentDate = addWeeks(currentDate, interval)
+      }
+      break
+
+    default:
+      return [event]
+  }
+
+  return instances
+}
+
+/**
+ * Get all events (including recurring instances) for a specific day
  */
 export function getAllEventsForDay(
   events: CalendarEvent[],
   day: Date
 ): CalendarEvent[] {
-  return events.filter((event) => {
-    const eventStart = new Date(event.start)
-    const eventEnd = new Date(event.end)
-    return (
-      isSameDay(day, eventStart) ||
-      isSameDay(day, eventEnd) ||
-      (day > eventStart && day < eventEnd)
-    )
-  })
-}
+  const start = startOfWeek(day)
+  const end = endOfWeek(day)
 
-/**
- * Get all events for a day (for agenda view)
- */
-export function getAgendaEventsForDay(
-  events: CalendarEvent[],
-  day: Date
-): CalendarEvent[] {
   return events
+    .flatMap((event) => generateRecurringEvents(event, start, end))
     .filter((event) => {
       const eventStart = new Date(event.start)
       const eventEnd = new Date(event.end)
@@ -139,5 +238,16 @@ export function getAgendaEventsForDay(
         (day > eventStart && day < eventEnd)
       )
     })
-    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+}
+
+/**
+ * Get all events (including recurring instances) for a day (for agenda view)
+ */
+export function getAgendaEventsForDay(
+  events: CalendarEvent[],
+  day: Date
+): CalendarEvent[] {
+  return getAllEventsForDay(events, day).sort(
+    (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+  )
 }

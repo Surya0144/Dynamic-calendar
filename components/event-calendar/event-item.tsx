@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 import type { DraggableAttributes } from "@dnd-kit/core"
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities"
+import { RiRepeatLine } from "@remixicon/react"
 import { differenceInMinutes, format, getMinutes, isPast } from "date-fns"
 
 import { cn } from "@/lib/utils"
@@ -103,7 +104,7 @@ export function EventItem({
   view,
   isDragging,
   onClick,
-  showTime,
+  showTime = true,
   currentTime,
   isFirstDay = true,
   isLastDay = true,
@@ -147,6 +148,8 @@ export function EventItem({
     return `${formatTimeWithOptionalMinutes(displayStart)} - ${formatTimeWithOptionalMinutes(displayEnd)}`
   }
 
+  const formattedTime = format(displayStart, "HH:mm")
+
   if (view === "month") {
     return (
       <EventWrapper
@@ -165,16 +168,21 @@ export function EventItem({
         onMouseDown={onMouseDown}
         onTouchStart={onTouchStart}
       >
-        {children || (
-          <span className="truncate">
-            {!event.allDay && (
-              <span className="truncate font-normal opacity-70 sm:text-[11px]">
-                {formatTimeWithOptionalMinutes(displayStart)}{" "}
-              </span>
-            )}
-            {event.title}
-          </span>
-        )}
+        <div className="flex min-w-0 items-center gap-1 p-1">
+          {event.recurrence && (
+            <RiRepeatLine className="size-3 shrink-0 opacity-70" />
+          )}
+          {showTime && !event.allDay && (
+            <time
+              dateTime={displayStart.toISOString()}
+              className="shrink-0 text-[10px] tabular-nums"
+            >
+              {formattedTime}
+            </time>
+          )}
+          <div className="truncate text-xs">{event.title}</div>
+        </div>
+        {children}
       </EventWrapper>
     )
   }
@@ -199,14 +207,23 @@ export function EventItem({
         onMouseDown={onMouseDown}
         onTouchStart={onTouchStart}
       >
+        <div className="flex min-w-0 items-center gap-1 p-1">
+          {event.recurrence && (
+            <RiRepeatLine className="size-3 shrink-0 opacity-70" />
+          )}
+          {showTime && (
+            <time
+              dateTime={displayStart.toISOString()}
+              className="shrink-0 text-[10px] tabular-nums"
+            >
+              {formattedTime}
+            </time>
+          )}
+          <div className="truncate text-xs">{event.title}</div>
+        </div>
         {durationMinutes < 45 ? (
-          <div className="truncate">
-            {event.title}{" "}
-            {showTime && (
-              <span className="opacity-70">
-                {formatTimeWithOptionalMinutes(displayStart)}
-              </span>
-            )}
+          <div className="truncate font-normal opacity-70 sm:text-[11px]">
+            {getEventTime()}
           </div>
         ) : (
           <>
