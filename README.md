@@ -1,6 +1,22 @@
 # Event Calendar React Component
 
-Dynamic Calendar is a modern, customizable React component designed to simplify event scheduling and management in web applications. Built with TypeScript and leveraging [v0](https://v0.dev/) UI components, this calendar offers a clean user experience with support for multiple views (Month, Week, Day, Agenda), drag-and-drop event management, event color coding, and responsive design. It is ideal for building dashboards, productivity tools, or any project that needs an interactive calendar.
+Dynamic Calendar is a modern, customizable React component designed to simplify event scheduling and management in web applications. Built with TypeScript and leveraging [v0](https://v0.dev/) UI components, this calendar offers a clean user experience with support for multiple views (Month, Week, Day, Agenda), drag-and-drop event management, event color coding, and responsive design.
+
+👉 [Try the Live Demo](https://my-dynamic-calendar.netlify.app/) | [View Source](https://github.com/Surya0144/dynamic-calendar)
+
+## Overview
+
+https://github.com/Surya1044/dynamic-calendar/assets/demo/calendar-overview.mp4
+
+_Quick demo showing basic calendar navigation and event management_
+
+### Key Features in Action
+
+| Feature                                                                     | Preview                                                  |
+| --------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **Multiple Views** <br/> Switch between Month, Week, Day, and Agenda views  | ![Calendar Views](./public/demos/calendar-views.gif)     |
+| **Create Event** <br/> Create and edit events with rich options | ![Event Management](./public/demos/Event.jpg)    |
+
 
 ## Features
 
@@ -12,6 +28,12 @@ Dynamic Calendar is a modern, customizable React component designed to simplify 
 - 🗓️ All-day events support
 - 📍 Location support for events
 - 🔄 Easy navigation between time periods
+- ↻ Recurring events with multiple patterns:
+  - Daily recurrence
+  - Weekly recurrence (with specific day selection)
+  - Monthly recurrence (on specific day of month)
+  - Custom recurrence (with week intervals)
+  - Optional end date for recurrence patterns
 
 ## Usage
 
@@ -68,6 +90,16 @@ interface CalendarEvent {
   allDay?: boolean
   color?: "sky" | "amber" | "violet" | "rose" | "emerald" | "orange"
   location?: string
+  recurrence?: RecurrencePattern
+  isRecurringInstance?: boolean
+}
+
+interface RecurrencePattern {
+  type: "none" | "daily" | "weekly" | "monthly" | "custom"
+  interval?: number // For custom recurrence (e.g., every 2 weeks)
+  weekDays?: number[] // For weekly recurrence (0-6, where 0 is Sunday)
+  monthDay?: number // For monthly recurrence (1-31)
+  endDate?: Date // Optional end date for the recurrence
 }
 ```
 
@@ -75,19 +107,60 @@ interface CalendarEvent {
 
 ### Month View
 
-Displays a traditional month calendar with events. Events that span multiple days are properly displayed across the days they span.
+- Traditional month calendar layout
+- Events span across multiple days
+- Recurring events shown with indicators
+- Color-coded events for easy recognition
 
 ### Week View
 
-Shows a detailed week view with hour slots. Events are positioned according to their time and can span multiple days.
+- Detailed hourly schedule
+- Multi-day events at the top
+- Overlapping event support
+- Real-time drag-and-drop
 
 ### Day View
 
-Provides a detailed view of a single day with hour slots. Perfect for seeing all events scheduled for a specific day.
+- Focused single-day schedule
+- Detailed event information
+- Easy event creation
+- Time-slot selection
 
 ### Agenda View
 
-Lists all events in a chronological list format, making it easy to see upcoming events at a glance.
+- List-style event display
+- Chronological ordering
+- Full event details
+- Quick event scanning
+
+## Recurring Events
+
+The calendar supports various recurrence patterns:
+
+### Daily Recurrence
+
+- Events repeat every day until the optional end date
+
+### Weekly Recurrence
+
+- Select specific days of the week for the event to repeat
+- Events repeat on the selected days every week
+
+### Monthly Recurrence
+
+- Select a specific day of the month (1-31)
+- Events repeat on that day every month
+
+### Custom Recurrence
+
+- Set a custom interval in weeks
+- Events repeat after the specified number of weeks
+
+All recurrence patterns support:
+
+- Optional end date
+- Visual indication with a repeat icon
+- Proper handling across all view modes
 
 ## Limitations and Known Issues
 
@@ -108,18 +181,9 @@ This calendar component is in early alpha stage and is not recommended for produ
 
 ### Technical Limitations
 
-- Limited testing across different browsers and devices
-- Performance may degrade with a large number of events
-- Time zone support is limited
-- No recurring event support
-- No integration with external calendars (Google, Outlook, etc.)
-
-### Other Considerations
-
-- The component has not undergone extensive testing
-- Error handling is minimal
-
-
+- Recurring events with very high frequency might impact performance
+- Time zone handling for recurring events needs improvement
+- No support for complex recurrence rules (e.g., "last Thursday of the month")
 
 ## License
 
