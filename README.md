@@ -1,6 +1,6 @@
 # Event Calendar React Component
 
-A flexible, interactive calendar component built with [v0](https://v0.dev/) UI components. This calendar provides multiple view modes, drag-and-drop event management, and a clean, responsive interface.
+Dynamic Calendar is a modern, customizable React component designed to simplify event scheduling and management in web applications. Built with TypeScript and leveraging [v0](https://v0.dev/) UI components, this calendar offers a clean user experience with support for multiple views (Month, Week, Day, Agenda), drag-and-drop event management, event color coding, and responsive design. It is ideal for building dashboards, productivity tools, or any project that needs an interactive calendar.
 
 ## Features
 
